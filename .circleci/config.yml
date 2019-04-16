@@ -400,6 +400,11 @@ jobs:
           path: "/go/src/github.com/filecoin-project/go-filecoin/bundle/"
           destination: bundle
 
+      - when:
+          condition: << parameters.nightly >>
+          steps:
+            - create_nightly_version
+
       - persist_to_workspace:
           root: "."
           paths:
@@ -412,7 +417,7 @@ jobs:
   unit_test_linux:
     docker:
       - image: circleci/golang:1.12.1
-    parallelism: 10
+    parallelism: 4
     working_directory: /go/src/github.com/filecoin-project/go-filecoin
     resource_class: large
     parameters:
@@ -468,7 +473,7 @@ jobs:
   integration_test_linux:
     docker:
       - image: circleci/golang:1.12.1
-    parallelism: 10
+    parallelism: 4
     working_directory: /go/src/github.com/filecoin-project/go-filecoin
     resource_class: large
     parameters:
@@ -529,7 +534,7 @@ jobs:
   functional_test_linux:
     docker:
       - image: circleci/golang:1.12.1
-    parallelism: 10
+    parallelism: 4
     working_directory: /go/src/github.com/filecoin-project/go-filecoin
     resource_class: large
     parameters:
@@ -787,6 +792,8 @@ workflows:
           requires:
             - build_linux
             - unit_test_linux
+            - integration_test_linux
+            - functional_test_linux
           filters:
             branches:
               only:
@@ -831,14 +838,25 @@ workflows:
     jobs:
       - deps_linux
       - build_linux:
-          nightly: true
           requires:
             - deps_linux
+      - unit_test_linux:
+          requires:
+            - deps_linux
+      - integration_test_linux:
+          requires:
+            - build_linux
+      - functional_test_linux:
+          requires:
+            - build_linux
       - build_macos
       - build_docker_img:
           nightly: true
           requires:
             - build_linux
+            - unit_test_linux
+            - integration_test_linux
+            - functional_test_linux
       - trigger_nightly_devnet_deploy:
           requires:
             - build_docker_img
@@ -868,6 +886,7 @@ workflows:
             tags:
               only:
                 - /^\d+\.\d+\.\d+$/
+
       - build_linux:
           requires:
             - deps_linux
@@ -879,9 +898,45 @@ workflows:
               only:
                 - /^\d+\.\d+\.\d+$/
 
+      - unit_test_linux:
+          requires:
+            - deps_linux
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^\d+\.\d+\.\d+$/
+
+      - integration_test_linux:
+          requires:
+            - build_linux
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^\d+\.\d+\.\d+$/
+
+      - functional_test_linux:
+          requires:
+            - build_linux
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^\d+\.\d+\.\d+$/
+
       - publish_release:
           requires:
             - build_linux
+            - unit_test_linux
+            - integration_test_linux
+            - functional_test_linux
             - build_macos
           filters:
             branches:
@@ -895,6 +950,9 @@ workflows:
           user_devnet: true
           requires:
             - build_linux
+            - unit_test_linux
+            - integration_test_linux
+            - functional_test_linux
           filters:
             branches:
               ignore:
@@ -947,9 +1005,45 @@ workflows:
               only:
                 - /^test\-devnet\-\d+\.\d+\.\d+$/
 
+      - unit_test_linux:
+          requires:
+            - deps_linux
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^test\-devnet\-\d+\.\d+\.\d+$/
+
+      - integration_test_linux:
+          requires:
+            - build_linux
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^test\-devnet\-\d+\.\d+\.\d+$/
+
+      - functional_test_linux:
+          requires:
+            - build_linux
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^test\-devnet\-\d+\.\d+\.\d+$/
+
       - publish_release:
           requires:
             - build_linux
+            - unit_test_linux
+            - integration_test_linux
+            - functional_test_linux
             - build_macos
           filters:
             branches:
@@ -963,6 +1057,9 @@ workflows:
           test_devnet: true
           requires:
             - build_linux
+            - unit_test_linux
+            - integration_test_linux
+            - functional_test_linux
           filters:
             branches:
               ignore:
