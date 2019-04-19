@@ -10,6 +10,8 @@ import (
 	"gx/ipfs/QmVmDhyTTUcQXFD1rRQ64fGLMSAoaQvNH3hwuaCFAPq2hy/errors"
 	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
 
+	"go.opencensus.io/trace"
+
 	"github.com/filecoin-project/go-filecoin/actor/builtin"
 	"github.com/filecoin-project/go-filecoin/consensus"
 	"github.com/filecoin-project/go-filecoin/sampling"
@@ -326,6 +328,7 @@ func (syncer *DefaultSyncer) HandleNewBlocks(ctx context.Context, blkCids []cid.
 	// by locking after collectChain completes, so my hunch is this can be
 	// fixed by simply moving the lock call below collectChain.
 	logSyncer.Debugf("trying to sync %v\n", blkCids)
+
 	syncer.mu.Lock()
 	defer syncer.mu.Unlock()
 	// If the store already has all these blocks the syncer is finished.
