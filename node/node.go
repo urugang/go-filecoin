@@ -485,6 +485,10 @@ func (node *Node) Start(ctx context.Context) error {
 		return errors.Wrap(err, "failed to setup metrics")
 	}
 
+	if err := metrics.RegisterJaeger(node.host.ID().Pretty(), node.Repo.Config().Trace); err != nil {
+		return errors.Wrap(err, "failed to setup tracing")
+	}
+
 	var err error
 	if err = node.ChainReader.Load(ctx); err != nil {
 		return err
