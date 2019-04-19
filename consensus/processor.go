@@ -4,6 +4,8 @@ import (
 	"context"
 	"math/big"
 
+	"go.opencensus.io/trace"
+
 	"github.com/filecoin-project/go-filecoin/actor"
 	"github.com/filecoin-project/go-filecoin/actor/builtin/account"
 	"github.com/filecoin-project/go-filecoin/address"
@@ -100,7 +102,21 @@ func NewConfiguredProcessor(validator SignedMessageValidator, rewarder BlockRewa
 // will in many cases be successfully applied even though an
 // error was thrown causing any state changes to be rolled back.
 // See comments on ApplyMessage for specific intent.
-func (p *DefaultProcessor) ProcessBlock(ctx context.Context, st state.Tree, vms vm.StorageMap, blk *types.Block, ancestors []types.TipSet) ([]*ApplicationResult, error) {
+func (p *DefaultProcessor) ProcessBlock(ctx context.Context, st state.Tree, vms vm.StorageMap, blk *types.Block, ancestors []types.TipSet) (results []*ApplicationResult, err error) {
+	ctx, span := trace.StartSpan(ctx, "DefaultProcessor.ProcessBlock")
+	defer func() {
+		if err != nil {
+			span.AddAttributes(trace.StringAttribute("error", err.Error()))
+		}
+		span.End()
+	}()
+	span.AddAttributes(
+		trace.StringAttribute("block", blk.Cid().String()),
+		trace.StringAttribute("miner", blk.Miner.String()),
+		trace.Int64Attribute("height", int64(blk.Height)),
+		trace.Int64Attribute("nonce", int64(blk.Nonce)),
+	)
+
 	var emptyResults []*ApplicationResult
 
 	pbsw := pbTimer.Start(ctx)
@@ -138,7 +154,15 @@ func (p *DefaultProcessor) ProcessBlock(ctx context.Context, st state.Tree, vms 
 // coming from calls to ApplyMessage can be traced to different blocks in the
 // TipSet containing conflicting messages and are ignored.  Blocks are applied
 // in the sorted order of their tickets.
-func (p *DefaultProcessor) ProcessTipSet(ctx context.Context, st state.Tree, vms vm.StorageMap, ts types.TipSet, ancestors []types.TipSet) (*ProcessTipSetResponse, error) {
+func (p *DefaultProcessor) ProcessTipSet(ctx context.Context, st state.Tree, vms vm.StorageMap, ts types.TipSet, ancestors []types.TipSet) (response *ProcessTipSetResponse, err error) {
+	ctx, span := trace.StartSpan(ctx, "DefaultProcessor.ProcessTipSet")
+	defer func() {
+		if err != nil {
+			span.AddAttributes(trace.StringAttribute("error", err.Error()))
+		}
+		span.End()
+	}()
+
 	var res ProcessTipSetResponse
 	var emptyRes ProcessTipSetResponse
 	h, err := ts.Height()
@@ -268,13 +292,31 @@ func (p *DefaultProcessor) ProcessTipSet(ctx context.Context, st state.Tree, vms
 //       revert errors.
 //   - everything else: successfully applied (include, keep changes)
 //
-func (p *DefaultProcessor) ApplyMessage(ctx context.Context, st state.Tree, vms vm.StorageMap, msg *types.SignedMessage, minerOwnerAddr address.Address, bh *types.BlockHeight, gasTracker *vm.GasTracker, ancestors []types.TipSet) (*ApplicationResult, error) {
+func (p *DefaultProcessor) ApplyMessage(ctx context.Context, st state.Tree,
+	vms vm.StorageMap, msg *types.SignedMessage, minerOwnerAddr address.Address,
+	bh *types.BlockHeight, gasTracker *vm.GasTracker, ancestors []types.TipSet,
+) (result *ApplicationResult, err error) {
+
+	ctx, span := trace.StartSpan(ctx, "DefaultProcessor.ApplyMessage")
+	defer func() {
+		if err != nil {
+			span.AddAttributes(trace.StringAttribute("error", err.Error()))
+		}
+		if result != nil {
+			span.AddAttributes(trace.Int64Attribute("exitCode", int64(result.Receipt.ExitCode)))
+		}
+		span.End()
+	}()
+	span.AddAttributes(trace.StringAttribute("from", msg.From.String()))
+	span.AddAttributes(trace.StringAttribute("to", msg.To.String()))
+	span.AddAttributes(trace.StringAttribute("method", msg.Method))
 
 	// used for log timer call below
 	msgCid, err := msg.Cid()
 	if err != nil {
 		return nil, errors.FaultErrorWrap(err, "could not get message cid")
 	}
+	span.AddAttributes(trace.StringAttribute("message", msgCid.String()))
 
 	amsw := amTimer.Start(ctx)
 	defer func() {

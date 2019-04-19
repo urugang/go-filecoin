@@ -15,6 +15,8 @@ import (
 	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
 	"gx/ipfs/QmcTzQXRcU2vf8yX5EEboz1BSvWC7wWmeYAKVQmhp8WZYU/sha256-simd"
 
+	"go.opencensus.io/trace"
+
 	"github.com/filecoin-project/go-filecoin/actor/builtin"
 	"github.com/filecoin-project/go-filecoin/actor/builtin/miner"
 	"github.com/filecoin-project/go-filecoin/address"
@@ -132,8 +134,6 @@ func (c *Expected) NewValidTipSet(ctx context.Context, blks []*types.Block) (typ
 // previous block has been validated. TODO: not yet signature checking
 func (c *Expected) validateBlockStructure(ctx context.Context, b *types.Block) error {
 	// TODO: validate signature on block
-	ctx = log.Start(ctx, "Expected.validateBlockStructure")
-	log.LogKV(ctx, "ValidateBlockStructure", b.Cid().String())
 	if !b.StateRoot.Defined() {
 		return fmt.Errorf("block has nil StateRoot")
 	}
@@ -235,9 +235,17 @@ func (c *Expected) IsHeavier(ctx context.Context, a, b types.TipSet, aSt, bSt st
 // starting state and a tipset to a new state.  It errors if the tipset was not
 // mined according to the EC rules, or if running the messages in the tipset
 // results in an error.
-func (c *Expected) RunStateTransition(ctx context.Context, ts types.TipSet, ancestors []types.TipSet, pSt state.Tree) (state.Tree, error) {
-	err := c.validateMining(ctx, pSt, ts, ancestors[0])
-	if err != nil {
+func (c *Expected) RunStateTransition(ctx context.Context, ts types.TipSet, ancestors []types.TipSet, pSt state.Tree) (st state.Tree, err error) {
+	ctx, span := trace.StartSpan(ctx, "Expected.RunStateTransition")
+	defer func() {
+		if err != nil {
+			span.AddAttributes(trace.StringAttribute("error", err.Error()))
+		}
+		span.End()
+	}()
+	span.AddAttributes(trace.StringAttribute("tipset", ts.String()))
+
+	if err := c.validateMining(ctx, pSt, ts, ancestors[0]); err != nil {
 		return nil, err
 	}
 
@@ -255,7 +263,7 @@ func (c *Expected) RunStateTransition(ctx context.Context, ts types.TipSet, ance
 	}
 
 	vms := vm.NewStorageMap(c.bstore)
-	st, err := c.runMessages(ctx, pSt, vms, ts, ancestors)
+	st, err = c.runMessages(ctx, pSt, vms, ts, ancestors)
 	if err != nil {
 		return nil, err
 	}
