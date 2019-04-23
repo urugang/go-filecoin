@@ -6,6 +6,9 @@ package types
 type SectorSize uint64
 
 const (
+	// OneKiBSectorSize TODO(laser)
 	OneKiBSectorSize = SectorSize(iota)
+
+	// TwoHundredFiftySixMiBSectorSize TODO(laser)
 	TwoHundredFiftySixMiBSectorSize
 )
