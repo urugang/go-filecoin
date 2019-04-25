@@ -77,15 +77,5 @@ install_local() {
 
 git submodule update --init --recursive proofs/rust-fil-proofs
 
-if [ -z "$FILECOIN_USE_PRECOMPILED_RUST_PROOFS" ]; then
-  echo "using local rust-fil-proofs"
-  install_local
-else
-  echo "using precompiled rust-fil-proofs"
-  install_precompiled
-
-  if [ $? -ne "0" ]; then
-    echo "failed to find or obtain precompiled rust-fil-proofs, falling back to local"
-    install_local
-  fi
-fi
+echo "using local rust-fil-proofs"
+install_local
