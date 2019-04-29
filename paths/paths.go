@@ -3,11 +3,26 @@ package paths
 import (
 	"os"
 	"path/filepath"
+
+	logging "github.com/ipfs/go-log"
+	"github.com/mitchellh/go-homedir"
 )
+
+var log logging.EventLogger
+var defaultHomeDir string
+
+func init() {
+	log = logging.Logger("paths")
+	var err error
+	defaultHomeDir, err = homedir.Expand(defaultHomeDirUnexpanded)
+	if err != nil {
+		log.Errorf("could not expand ~/.filecoin default home directory: %s", err)
+	}
+}
 
 // node repo path defaults
 const filPathVar = "FIL_PATH"
-const defaultHomeDir = "~/.filecoin"
+const defaultHomeDirUnexpanded = "~/.filecoin"
 const defaultRepoDir = "repo"
 
 // node sector storage path defaults
