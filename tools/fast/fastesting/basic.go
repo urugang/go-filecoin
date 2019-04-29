@@ -153,6 +153,6 @@ func dumpEnvOutputOnFail(t *testing.T, procs []*fast.Filecoin) {
 		for _, node := range procs {
 			node.DumpLastOutput(w)
 		}
-		w.Close()
+		require.NoError(t, w.Close())
 	}
 }

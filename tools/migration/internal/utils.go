@@ -12,7 +12,7 @@ func NowString() string {
 	return now.Format("20060102-150405")
 }
 
-// expandHomedir replaces an initial tilde in a dirname to the home dir.
+// ExpandHomedir replaces an initial tilde in a dirname to the home dir.
 // if there is no initial ~ , it returns dirname.
 func ExpandHomedir(dirname string) string {
 	if strings.LastIndex(dirname, "~") != 0 {

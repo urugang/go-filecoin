@@ -140,7 +140,9 @@ func TestFSRepoOpen(t *testing.T) {
 	t.Run("[fail] binary version newer than repo", func(t *testing.T) {
 		dir, err := ioutil.TempDir("", "")
 		assert.NoError(t, err)
-		defer os.RemoveAll(dir)
+		defer func() {
+			require.NoError(t, os.RemoveAll(dir))
+		}()
 
 		assert.NoError(t, InitFSRepo(dir, config.NewDefaultConfig()))
 		// set wrong version
@@ -152,8 +154,10 @@ func TestFSRepoOpen(t *testing.T) {
 	t.Run("[fail] version corrupt", func(t *testing.T) {
 		dir, err := ioutil.TempDir("", "")
 		assert.NoError(t, err)
+		defer func() {
+			require.NoError(t, os.RemoveAll(dir))
+		}()
 
-		defer os.RemoveAll(dir)
 		assert.NoError(t, InitFSRepo(dir, config.NewDefaultConfig()))
 		// set wrong version
 		assert.NoError(t, ioutil.WriteFile(filepath.Join(dir, versionFilename), []byte("v.8"), 0644))

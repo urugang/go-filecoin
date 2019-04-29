@@ -33,7 +33,9 @@ const (
 	dealsDatastorePrefix   = "deals"
 	snapshotStorePrefix    = "snapshots"
 	snapshotFilenamePrefix = "snapshot"
-	DefaultRepoDir         = "repo"
+
+	// DefaultRepoDir is the default directory of the filecoin repo
+	DefaultRepoDir = "repo"
 )
 
 // NoRepoError is returned when trying to open a repo where one does not exist
@@ -465,6 +467,7 @@ func (r *FSRepo) SetAPIAddr(maddr string) error {
 	return nil
 }
 
+// APIAddrFromRepoPath returns the api addr from the filecoin repo
 func APIAddrFromRepoPath(repoPath string) (string, error) {
 	repoPath, err := homedir.Expand(repoPath)
 	if err != nil {

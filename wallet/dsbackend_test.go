@@ -16,7 +16,7 @@ func TestDSBackendSimple(t *testing.T) {
 
 	ds := datastore.NewMapDatastore()
 	defer func() {
-		require.NoError(ds.Close())
+		require.NoError(t, ds.Close())
 	}()
 
 	fs, err := NewDSBackend(ds)
@@ -44,7 +44,7 @@ func TestDSBackendKeyPairMatchAddress(t *testing.T) {
 
 	ds := datastore.NewMapDatastore()
 	defer func() {
-		require.NoError(ds.Close())
+		require.NoError(t, ds.Close())
 	}()
 
 	fs, err := NewDSBackend(ds)
@@ -74,14 +74,14 @@ func TestDSBackendErrorsForUnknownAddress(t *testing.T) {
 	// create 2 backends
 	ds1 := datastore.NewMapDatastore()
 	defer func() {
-		require.NoError(ds1.Close())
+		require.NoError(t, ds1.Close())
 	}()
 	fs1, err := NewDSBackend(ds1)
 	assert.NoError(t, err)
 
 	ds2 := datastore.NewMapDatastore()
 	defer func() {
-		require.NoError(ds2.Close())
+		require.NoError(t, ds2.Close())
 	}()
 	fs2, err := NewDSBackend(ds2)
 	assert.NoError(t, err)
@@ -112,7 +112,7 @@ func TestDSBackendParallel(t *testing.T) {
 
 	ds := datastore.NewMapDatastore()
 	defer func() {
-		require.NoError(ds.Close())
+		require.NoError(t, ds.Close())
 	}()
 
 	fs, err := NewDSBackend(ds)

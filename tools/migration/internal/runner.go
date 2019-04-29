@@ -43,12 +43,14 @@ type RepoWrangler interface {
 	GetNewRepoPath() string
 }
 
+// MigrationRunner represent a migration command
 type MigrationRunner struct {
 	verbose bool
 	command string
 	helper  RepoWrangler
 }
 
+// NewMigrationRunner builds a MirgrationRunner for the given command and repo options
 func NewMigrationRunner(verb bool, command, oldRepoOpt, newRepoPrefixOpt string) *MigrationRunner {
 	// TODO: Issue #2585 Implement repo migration version detection and upgrade decisioning
 	oldVersion := "1"
@@ -62,6 +64,7 @@ func NewMigrationRunner(verb bool, command, oldRepoOpt, newRepoPrefixOpt string)
 	}
 }
 
+// Run executes the MigrationRunner
 func (m *MigrationRunner) Run() error {
 	// TODO: Issue #2595 Implement first repo migration
 	return nil

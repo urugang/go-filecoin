@@ -55,7 +55,7 @@ func StagingDir(sectorPath string) string {
 	return filepath.Join(sectorPath, defaultSectorStagingDir)
 }
 
-// StagingDir returns the path to the sector sealed directory given the sector
+// SealedDir returns the path to the sector sealed directory given the sector
 // storage directory path.
 func SealedDir(sectorPath string) string {
 	return filepath.Join(sectorPath, defaultSectorSealingDir)
