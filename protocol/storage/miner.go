@@ -493,6 +493,8 @@ type dealsAwaitingSealStruct struct {
 	SuccessfulSectors map[uint64]*sectorbuilder.SealedSectorMetadata
 	// Maps from sector id to seal failure error string.
 	FailedSectors map[uint64]string
+	// Maps from sector id to a sectors commitSector message
+	CommitmentMessages map[uint64]cid.Cid
 
 	onSuccess func(dealCid cid.Cid, sector *sectorbuilder.SealedSectorMetadata)
 	onFail    func(dealCid cid.Cid, message string)
@@ -583,7 +585,7 @@ func (dealsAwaitingSeal *dealsAwaitingSealStruct) fail(sectorID uint64, message 
 }
 
 // OnCommitmentAddedToChain is a callback, called when a sector seal message was posted to the chain.
-func (sm *Miner) OnCommitmentAddedToChain(sector *sectorbuilder.SealedSectorMetadata, err error) {
+func (sm *Miner) OnCommitmentAddedToChain(sector *sectorbuilder.SealedSectorMetadata, msgCid cid.Cid, err error) {
 	sectorID := sector.SectorID
 	log.Debug("Miner.OnCommitmentAddedToChain")
 
@@ -592,6 +594,7 @@ func (sm *Miner) OnCommitmentAddedToChain(sector *sectorbuilder.SealedSectorMeta
 		errMsg := fmt.Sprintf("failed sealing sector: %d", sectorID)
 		sm.dealsAwaitingSeal.fail(sector.SectorID, errMsg)
 	} else {
+		sm.dealsAwaitingSeal.CommitmentMessages[sector.SectorID] = msgCid
 		sm.dealsAwaitingSeal.success(sector)
 	}
 	if err := sm.saveDealsAwaitingSeal(); err != nil {
@@ -601,17 +604,40 @@ func (sm *Miner) OnCommitmentAddedToChain(sector *sectorbuilder.SealedSectorMeta
 }
 
 func (sm *Miner) onCommitSuccess(dealCid cid.Cid, sector *sectorbuilder.SealedSectorMetadata) {
+	var pieceInclusionProof []byte
+	pieceInfo := sm.findPieceInfo(dealCid, sector)
+	if pieceInfo != nil {
+		pieceInclusionProof = pieceInfo.InclusionProof
+	}
+
+	commitmentMessage := sm.dealsAwaitingSeal.CommitmentMessages[sector.SectorID]
+
 	err := sm.updateDealResponse(dealCid, func(resp *storagedeal.Response) {
+
 		resp.State = storagedeal.Posted
 		resp.ProofInfo = &storagedeal.ProofInfo{
-			SectorID: sector.SectorID,
-			CommR:    sector.CommR[:],
-			CommD:    sector.CommD[:],
+			SectorID:            sector.SectorID,
+			CommitmentMessage:   &commitmentMessage,
+			PieceInclusionProof: pieceInclusionProof,
 		}
 	})
 	if err != nil {
 		log.Errorf("commit succeeded but could not update to deal 'Posted' state: %s", err)
 	}
+}
+
+func (sm *Miner) findPieceInfo(dealCid cid.Cid, sector *sectorbuilder.SealedSectorMetadata) *sectorbuilder.PieceInfo {
+	deal := sm.porcelainAPI.DealGet(dealCid)
+	if deal == nil {
+		return nil
+	}
+
+	for _, info := range sector.Pieces {
+		if info.Ref == deal.Proposal.PieceRef {
+			return info
+		}
+	}
+	return nil
 }
 
 func (sm *Miner) onCommitFail(dealCid cid.Cid, message string) {
