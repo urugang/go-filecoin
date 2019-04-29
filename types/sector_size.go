@@ -6,9 +6,9 @@ package types
 type SectorSize uint64
 
 const (
-	// OneKiBSectorSize TODO(laser)
+	// OneKiBSectorSize indicates a sector which, after sealing, contains 1024 bytes.
 	OneKiBSectorSize = SectorSize(iota)
 
-	// TwoHundredFiftySixMiBSectorSize TODO(laser)
+	// TwoHundredFiftySixMiBSectorSize indicates a sector which, after sealing, contains 256MiB.
 	TwoHundredFiftySixMiBSectorSize
 )
