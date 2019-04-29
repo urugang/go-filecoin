@@ -23,7 +23,7 @@ func TestTrivialNew(t *testing.T) {
 }
 
 func TestAPI_MineOnce(t *testing.T) {
-	tf.UnitTest(t)
+	tf.BadUnitTestWithSideEffects(t)
 
 	assert := ast.New(t)
 	require := req.New(t)
@@ -40,7 +40,7 @@ func TestAPI_MineOnce(t *testing.T) {
 }
 
 func TestMiningAPI_MiningStart(t *testing.T) {
-	tf.UnitTest(t)
+	tf.BadUnitTestWithSideEffects(t)
 
 	assert := ast.New(t)
 	require := req.New(t)
@@ -55,7 +55,7 @@ func TestMiningAPI_MiningStart(t *testing.T) {
 }
 
 func TestMiningAPI_MiningStop(t *testing.T) {
-	tf.UnitTest(t)
+	tf.BadUnitTestWithSideEffects(t)
 
 	assert := ast.New(t)
 	require := req.New(t)

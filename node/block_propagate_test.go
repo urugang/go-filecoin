@@ -30,7 +30,7 @@ func connect(t *testing.T, nd1, nd2 *Node) {
 }
 
 func TestBlockPropsManyNodes(t *testing.T) {
-	tf.UnitTest(t)
+	tf.BadUnitTestWithSideEffects(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -93,7 +93,7 @@ func TestBlockPropsManyNodes(t *testing.T) {
 }
 
 func TestChainSync(t *testing.T) {
-	tf.UnitTest(t)
+	tf.BadUnitTestWithSideEffects(t)
 
 	ctx := context.Background()
 
