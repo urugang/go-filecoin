@@ -532,6 +532,13 @@ func (sm *Miner) saveDealsAwaitingSeal() error {
 	return nil
 }
 
+func (dealsAwaitingSeal *dealsAwaitingSealStruct) addCommitMessageCid(sectorID uint64, msgCid cid.Cid) {
+	dealsAwaitingSeal.l.Lock()
+	defer dealsAwaitingSeal.l.Unlock()
+
+	dealsAwaitingSeal.CommitmentMessages[sectorID] = msgCid
+}
+
 func (dealsAwaitingSeal *dealsAwaitingSealStruct) add(sectorID uint64, dealCid cid.Cid) {
 	dealsAwaitingSeal.l.Lock()
 	defer dealsAwaitingSeal.l.Unlock()
@@ -594,7 +601,7 @@ func (sm *Miner) OnCommitmentAddedToChain(sector *sectorbuilder.SealedSectorMeta
 		errMsg := fmt.Sprintf("failed sealing sector: %d", sectorID)
 		sm.dealsAwaitingSeal.fail(sector.SectorID, errMsg)
 	} else {
-		sm.dealsAwaitingSeal.CommitmentMessages[sector.SectorID] = msgCid
+		sm.dealsAwaitingSeal.addCommitMessageCid(sectorID, msgCid)
 		sm.dealsAwaitingSeal.success(sector)
 	}
 	if err := sm.saveDealsAwaitingSeal(); err != nil {

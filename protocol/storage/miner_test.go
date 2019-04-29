@@ -325,6 +325,46 @@ func TestDealsAwaitingSeal(t *testing.T) {
 	})
 }
 
+func TestOnCommitmentAddedToChain(t *testing.T) {
+	tf.UnitTest(t)
+
+	porcelainAPI, miner, proposal := defaultMinerTestSetup(t, VoucherInterval, defaultAmountInc)
+
+	porcelainAPI := newMinerTestPorcelain(t)
+	miner := &Miner{
+		porcelainAPI: porcelainAPI,
+		dealsAwaitingSeal: &dealsAwaitingSealStruct{
+			SectorsToDeals:     make(map[uint64][]cid.Cid),
+			SuccessfulSectors:  make(map[uint64]*sectorbuilder.SealedSectorMetadata),
+			CommitmentMessages: make(map[uint64]cid.Cid),
+		},
+		dealsAwaitingSealDs: repo.NewInMemoryRepo().DealsDatastore(),
+	}
+
+	cidGetter := types.NewCidForTestGetter()
+	sectorId := uint64(777)
+	msgCid := cidGetter()
+	var commD types.CommD
+	copy(commD[:], []byte{9, 9, 9, 9})
+	pip := []byte{3, 3, 3, 3, 3}
+
+	piece := &sectorbuilder.PieceInfo{
+		Ref:            cidGetter(),
+		Size:           10999,
+		InclusionProof: pip,
+	}
+
+	sector := &sectorbuilder.SealedSectorMetadata{
+		SectorID: sectorId,
+		CommD:    commD,
+		Pieces:   []*sectorbuilder.PieceInfo{piece},
+	}
+
+	miner.OnCommitmentAddedToChain(sector, msgCid, nil)
+	miner.onCommitSuccess()
+
+}
+
 type minerTestPorcelain struct {
 	config        *cfg.Config
 	payerAddress  address.Address
@@ -441,6 +481,11 @@ func newTestMiner(api *minerTestPorcelain) *Miner {
 			return &storagedeal.Response{State: storagedeal.Rejected, Message: reason}, nil
 		},
 	}
+}
+
+func minerWithAcceptedDealTestSetup(t *testing.T, voucherInverval int, amountInc uint64) (*minerTestPorcelain, *Miner, *storagedeal.SignedDealProposal) {
+	porcelainAPI, miner, proposal := defaultMinerTestSetup(t, voucherInverval, amountInc)
+	acceptProposal(miner, proposal)
 }
 
 func defaultMinerTestSetup(t *testing.T, voucherInverval int, amountInc uint64) (*minerTestPorcelain, *Miner, *storagedeal.SignedDealProposal) {
