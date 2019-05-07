@@ -19,8 +19,8 @@ import (
 
 	"github.com/filecoin-project/go-filecoin/config"
 
-	"github.com/ipfs/iptb/testbed/interfaces"
-	"github.com/ipfs/iptb/util"
+	testbedi "github.com/ipfs/iptb/testbed/interfaces"
+	iptbutil "github.com/ipfs/iptb/util"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/filecoin-project/go-filecoin/tools/iptb-plugins/filecoin"
@@ -357,6 +357,11 @@ func (l *Localfilecoin) RunCmd(ctx context.Context, stdin io.Reader, args ...str
 		err = oerr
 	}
 
+	if err == nil {
+		l.Infof("stdout: %s", string(stdoutbytes))
+	} else {
+		l.Errorf("stderr: %s", string(stderrbytes))
+	}
 	return iptbutil.NewOutput(args, stdoutbytes, stderrbytes, exitcode, err), nil
 }
 
