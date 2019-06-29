@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 download_release_tarball() {
+    return 1
     __resultvar=$1
     __submodule_path=$2
     __repo_name=$(echo $2 | cut -d '/' -f 2)

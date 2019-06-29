@@ -10,5 +10,5 @@ generate_params() {
   ./proofs/bin/paramcache
 }
 
-fetch_params
-generate_params
+# fetch_params
+# generate_params

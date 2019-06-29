@@ -2,6 +2,7 @@
 
 set -Eeo pipefail
 
+exit 0
 source "$(dirname "${BASH_SOURCE[0]}")/install-shared.bash"
 
 subm_dir="proofs/rust-fil-proofs"

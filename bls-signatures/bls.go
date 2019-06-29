@@ -4,7 +4,7 @@ import (
 	"unsafe"
 )
 
-// #cgo LDFLAGS: -L${SRCDIR}/lib -lbls_signatures
+// #cgo LDFLAGS: -L${SRCDIR}/lib -lbls_signatures_ffi
 // #cgo pkg-config: ${SRCDIR}/lib/pkgconfig/libbls_signatures.pc
 // #include "./include/libbls_signatures.h"
 import "C"
