@@ -72,7 +72,7 @@ build_from_source() {
     if [[ -f "./scripts/build-release.sh" ]]; then
         ./scripts/build-release.sh $(cat rust-toolchain)
     else
-        cargo build --release --all
+        cargo build --all
     fi
 
     popd

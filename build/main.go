@@ -250,6 +250,7 @@ func buildFilecoin() {
 	runCmd(cmd([]string{
 		"go", "build",
 		"-ldflags", fmt.Sprintf("-X github.com/filecoin-project/go-filecoin/flags.Commit=%s", getCommitSha()),
+		"-work",
 		"-v", "-o", "go-filecoin", ".",
 	}...))
 }
